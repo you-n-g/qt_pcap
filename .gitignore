@@ -1,0 +1,6 @@
+*.swp
+Makefile
+*.pro.user
+*.out
+*.o
+tags
