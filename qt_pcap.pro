@@ -13,8 +13,14 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    frame_parser.cpp \
+    pcapthread.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    frame_parser.h \
+    pcapthread.h
 
 FORMS    += mainwindow.ui
+
+unix|win32: LIBS += -lpcap

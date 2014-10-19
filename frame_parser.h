@@ -7,6 +7,9 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
 
 
 // ether related
