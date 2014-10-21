@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-
+#include <QtCore>
 
 
 // ether related
@@ -22,10 +22,11 @@ public:
     u_char* get_ether_dhost();
     u_char* get_next_layer_frame_pointer();
     bpf_u_int32 get_next_layer_frame_length();
-    static void print_mac_address(u_char*);
+    static QString byte_to_mac_addr(u_char*);
 private:
     struct ether_header * eptr;
     bpf_u_int32 len;
+
 };
 
 
@@ -43,6 +44,23 @@ public:
 private:
     struct ip * iptr;
     bpf_u_int32 len;
+};
+
+
+class PackParser {
+
+public:
+    PackParser(const QByteArray &qba);
+    EtherHeaderParser * ehp;
+    IpHeaderParser * ihp;
+    QByteArray qba;
+    const QString & get_highest_protocol();
+    QString * to_hex_qstring(bool with_space=true, bool with_linebreak=true);
+    QString * to_ascii_qstring(bool with_space=true, bool with_linebreak=true);
+    static bool isPrintable(char c);
+
+private:
+    QString highest_protocol;
 };
 
 #endif

@@ -15,12 +15,17 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     frame_parser.cpp \
-    pcapthread.cpp
+    pcapthread.cpp \
+    pcapqtools.cpp \
+    hexdecode.cpp
 
 HEADERS  += mainwindow.h \
     frame_parser.h \
-    pcapthread.h
+    pcapthread.h \
+    pcapqtools.h \
+    hexdecode.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    hexdecode.ui
 
 unix|win32: LIBS += -lpcap

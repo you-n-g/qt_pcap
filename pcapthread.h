@@ -9,6 +9,8 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include "frame_parser.h"
+#include <QDebug>
+#include <QtCore>
 
 class PcapThread : public QThread
 {
@@ -16,10 +18,15 @@ class PcapThread : public QThread
     void run() Q_DECL_OVERRIDE;
 public:
     explicit PcapThread(QObject *parent = 0);
-
+    void stopWork();
 signals:
-    void resultReady(const QString &s);
+    void resultReady(const QByteArray &data);
 public slots:
+
+private:
+    void initDevice();
+    pcap_t *handle;
+    bool workOn;
 };
 
 #endif // PCAPTHREAD_H

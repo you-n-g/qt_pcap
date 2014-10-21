@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>364</width>
-    <height>488</height>
+    <width>714</width>
+    <height>401</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,45 +20,61 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>258</width>
-      <height>392</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QListWidget" name="listWidget"/>
-     </item>
-     <item>
-      <widget class="QTreeWidget" name="treeWidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <widget class="QTreeWidget" name="allWidgetTreeWidget">
+       <column>
+        <property name="text">
+         <string>source</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>destination</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>protocol</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>length</string>
+        </property>
+       </column>
+      </widget>
+      <widget class="QTreeWidget" name="singlePackageTreeWidget">
        <column>
         <property name="text">
          <string notr="true">1</string>
         </property>
        </column>
       </widget>
-     </item>
-    </layout>
-   </widget>
+      <widget class="HexDecode" name="hexDecodeWidget" native="true"/>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>364</width>
-     <height>28</height>
+     <width>714</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOperation">
     <property name="title">
      <string>操作</string>
     </property>
-    <addaction name="action"/>
+    <addaction name="actionBeginPcap"/>
+    <addaction name="actionStopPcap"/>
    </widget>
    <addaction name="menuOperation"/>
   </widget>
@@ -69,16 +85,30 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="action"/>
+   <addaction name="actionBeginPcap"/>
+   <addaction name="actionStopPcap"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="action">
+  <action name="actionBeginPcap">
    <property name="text">
     <string>开始抓包</string>
    </property>
   </action>
+  <action name="actionStopPcap">
+   <property name="text">
+    <string>结束抓包</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>HexDecode</class>
+   <extends>QWidget</extends>
+   <header>hexdecode.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -27,9 +27,14 @@ bpf_u_int32 EtherHeaderParser::get_next_layer_frame_length(){
     return len - sizeof(struct ether_header) - ETHER_CRC_LEN;
 }
 
-void EtherHeaderParser::print_mac_address(u_char * ptr) {
-    for (int i = ETHER_ADDR_LEN; i > 0; --i)
-        printf("%02X%s", *ptr++, (i > 1) ? ":" : "\n");
+QString EtherHeaderParser::byte_to_mac_addr(u_char * ptr) {
+    QString str;
+    char buffer[10];
+    for (int i = ETHER_ADDR_LEN; i > 0; --i) {
+        sprintf(buffer, "%02X%s", *ptr++, (i > 1) ? ":" : "");
+        str.append(buffer);
+    }
+    return str;
 }
 
 
@@ -73,3 +78,64 @@ void IpHeaderParser::print_hex_content() {
     printf("\n----------END  --------\n");
 }
 
+
+// Pack Parser
+
+PackParser::PackParser(const QByteArray &qba) {
+    this->qba = qba;
+    ehp = new EtherHeaderParser(qba.length(), (const u_char *)qba.constData());
+    if (ehp->get_type() == ETHERTYPE_IP) {
+        highest_protocol = "IP";
+        ihp = new IpHeaderParser(ehp->get_next_layer_frame_length(), ehp->get_next_layer_frame_pointer());
+    }
+    else if (ehp->get_type() == ETHERTYPE_ARP) {
+        highest_protocol = "ARP";
+        qDebug("Ethernet type hex:%x dec:%d is an ARP packet\n", ehp->get_type(), ehp->get_type());
+    }
+    else {
+        highest_protocol = "UNKNOWN";
+        qDebug("Ethernet type %x not IP, ARP", ehp->get_type());
+    }
+};
+
+const QString & PackParser::get_highest_protocol(){
+    return highest_protocol;
+}
+
+QString *PackParser::to_hex_qstring(bool with_space, bool with_linebreak)
+{
+    QString * hex_qstring = new QString();
+    for (int i = 0; i < qba.length(); ++i) {
+        hex_qstring->append(QString().sprintf("%02X", (u_int8_t)qba.at(i)));
+        if (with_space) {
+            hex_qstring->append(" ");
+            if ((i + 1) % 4 == 0)
+                hex_qstring->append(" ");
+        }
+        if (with_linebreak && (i + 1) % 16 == 0) {
+            while (hex_qstring->endsWith(' ')) hex_qstring->chop(1);
+            hex_qstring->append("\n");
+        }
+    }
+    return hex_qstring;
+}
+
+QString *PackParser::to_ascii_qstring(bool with_space, bool with_linebreak)
+{
+    QString * ascii_qstring = new QString();
+    for (int i = 0; i < qba.length(); ++i) {
+        ascii_qstring->append(PackParser::isPrintable(qba.at(i)) ? qba.at(i) : '.');
+        if (with_space) {
+            if ((i + 1) % 4 == 0)
+                ascii_qstring->append(" ");
+        }
+        if (with_linebreak && (i + 1) % 16 == 0) {
+            while (ascii_qstring->endsWith(' ')) ascii_qstring->chop(1);
+            ascii_qstring->append("\n");
+        }
+    }
+    return ascii_qstring;
+}
+
+bool PackParser::isPrintable(char c)
+{if ((c > 48) && (c < 126)) return true; else return false; }
