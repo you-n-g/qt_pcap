@@ -17,15 +17,18 @@ SOURCES += main.cpp\
     frame_parser.cpp \
     pcapthread.cpp \
     pcapqtools.cpp \
-    hexdecode.cpp
+    hexdecode.cpp \
+    setdevicedialog.cpp
 
 HEADERS  += mainwindow.h \
     frame_parser.h \
     pcapthread.h \
     pcapqtools.h \
-    hexdecode.h
+    hexdecode.h \
+    setdevicedialog.h
 
 FORMS    += mainwindow.ui \
-    hexdecode.ui
+    hexdecode.ui \
+    setdevicedialog.ui
 
 unix|win32: LIBS += -lpcap

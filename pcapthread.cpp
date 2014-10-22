@@ -3,21 +3,27 @@
 PcapThread::PcapThread(QObject *parent) :
     QThread(parent)
 {
+    setArgs("", "");
 }
 
 void PcapThread::initDevice() {
     // Open the default device
     char *dev, errbuf[PCAP_ERRBUF_SIZE];
+    QByteArray dev_data, filter_data;
 
+    /*
     dev = pcap_lookupdev(errbuf);
     if (dev == NULL) {
         fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
         exit(2);
     }
     qDebug("Device: %s\n", dev);
+    */
 
     // Open the device to sniff
-
+    dev_data = selected_device.toLatin1();
+    dev = dev_data.data();
+    qDebug() << "We begin capture" << dev;
     handle = pcap_open_live(dev, BUFSIZ, 1, 500, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
@@ -40,19 +46,19 @@ void PcapThread::initDevice() {
         mask = 0;
     }
 
-    // TODO: set the sniffer filter expression
-    /*
+    // set the sniffer filter expression
     struct bpf_program fp;		// The compiled filter expression
-    char filter_exp[] = "port 23";	// TODO change the filter expression,  see manual of pcap-filter and tcpdump
+    filter_data = filter_rule.toLatin1();
+    char * filter_exp = filter_data.data();
+    qDebug()<< "The filter is" << filter_exp;
     if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
-        return(2);
+        pcap_compile(handle, &fp, "", 0, net);
+        qDebug("Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+        emit popMsg(QString("The filter is invalid!!!"));
     }
     if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
-        return(2);
+        qDebug("Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
     }
-    */
 }
 
 
@@ -74,4 +80,10 @@ void PcapThread::run() Q_DECL_OVERRIDE {
 
 void PcapThread::stopWork() {
     workOn = false;
+}
+
+void PcapThread::setArgs(QString device, QString filter)
+{
+    this->selected_device = device;
+    this->filter_rule = filter;
 }

@@ -46,7 +46,7 @@ struct __attribute__((__packed__)) arp_header
 
 class ARPHeaderParser {
 public:
-    ARPHeaderParser(const bpf_u_int32 len, const u_char* packet);
+    ARPHeaderParser(const bpf_u_int32 len, const u_char* ptr);
     u_int16_t get_uint_htype();
     QString get_qstring_htype();
     u_int16_t get_uint_ptype();
@@ -68,11 +68,9 @@ private:
 class IpHeaderParser {
 public:
     IpHeaderParser(const bpf_u_int32 len, const u_char* packet);
-    //u_char* get_next_layer_frame_pointer();
-    //bpf_u_int32 get_next_layer_frame_length();
     unsigned int get_version() { return iptr->ip_v; }
-    u_int16_t get_ip_len(){return iptr->ip_hl;}
-    u_int16_t get_ip_byte_len(){return get_ip_len() * 4;}
+    u_int16_t get_header_len(){return iptr->ip_hl;}
+    u_int16_t get_header_byte_len(){return get_header_len() * 4;}
     u_short get_def() { return iptr->ip_tos;}
     u_int16_t get_total_length() { return ntohs(iptr->ip_len);}
     u_int16_t get_id() { return ntohs(iptr->ip_id);}
@@ -88,6 +86,9 @@ public:
     QString get_qstring_saddr(){return inet_ntoa(iptr->ip_src);}
     u_int32_t get_daddr(){return ntohl(iptr->ip_dst.s_addr);}
     QString get_qstring_daddr(){return inet_ntoa(iptr->ip_dst);}
+
+    u_char *get_next_layer_frame_pointer();
+    bpf_u_int32 get_next_layer_frame_length();
     void print_hex_content();
     static void print_ip_address(u_int32_t);
 private:
@@ -96,13 +97,34 @@ private:
 };
 
 
+// UDP related
+struct udp_header
+{
+  u_int16_t src_port;
+  u_int16_t dst_port;
+  u_int16_t len;
+  u_int16_t checksum;
+};
+
+class UDPHeaderParser {
+public:
+    UDPHeaderParser(const bpf_u_int32 len, const u_char* packet);
+
+private:
+    udp_header *uptr;
+    bpf_u_int32 len;
+};
+
+
+//  PackParser
 class PackParser {
 
 public:
     PackParser(const QByteArray &qba);
-    EtherHeaderParser * ehp=NULL;
-    IpHeaderParser * ihp=NULL;
-    ARPHeaderParser * ahp=NULL;
+    EtherHeaderParser *ehp=NULL;
+    IpHeaderParser *ihp=NULL;
+    ARPHeaderParser *ahp=NULL;
+    UDPHeaderParser *uhp=NULL;
     QByteArray qba;
     const QString & get_highest_protocol();
     QString * to_hex_qstring(bool with_space=true, bool with_linebreak=true);

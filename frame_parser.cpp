@@ -2,16 +2,16 @@
 
 
 // EtherHeaderParser
-EtherHeaderParser::EtherHeaderParser(const bpf_u_int32 len, const u_char* packet){
+EtherHeaderParser::EtherHeaderParser(const bpf_u_int32 len, const u_char* ptr){
     this->len = len;
-    eptr = (struct ether_header *) packet;
+    eptr = (struct ether_header *) ptr;
 }
 
 uint16_t EtherHeaderParser::get_type() {
     return ntohs(eptr->ether_type);
 }
 
-QString EtherHeaderParser::get_string_type()
+QString EtherHeaderParser::get_qstring_type()
 {
 
     if (get_type() == ETHERTYPE_IP) {
@@ -70,6 +70,16 @@ QString IpHeaderParser::get_qstring_protocol()
     }
 }
 
+u_char *IpHeaderParser::get_next_layer_frame_pointer()
+{
+    return (u_char *) iptr + get_header_byte_len();
+}
+
+bpf_u_int32 IpHeaderParser::get_next_layer_frame_length()
+{
+    return len - get_header_byte_len();
+}
+
 void IpHeaderParser::print_ip_address(u_int32_t u_int_ip) {
     for (int i = 3; i >= 0; --i)
         printf("%u%s", (u_int_ip &  (0xff << (i * 8))) >> (i * 8), i ? "." : "");
@@ -96,6 +106,7 @@ PackParser::PackParser(const QByteArray &qba) {
     if (ehp->get_type() == ETHERTYPE_IP) {
         highest_protocol = "IP";
         ihp = new IpHeaderParser(ehp->get_next_layer_frame_length(), ehp->get_next_layer_frame_pointer());
+        // if (ihp->get_uint_protocol() == ) // DOING.....
     }
     else if (ehp->get_type() == ETHERTYPE_ARP) {
         highest_protocol = "ARP";
@@ -152,10 +163,10 @@ bool PackParser::isPrintable(char c)
 
 
 // ARP related
-ARPHeaderParser::ARPHeaderParser(const bpf_u_int32 len, const u_char *packet)
+ARPHeaderParser::ARPHeaderParser(const bpf_u_int32 len, const u_char *ptr)
 {
     this->len = len;
-    aptr = (struct arp_header *) packet;
+    aptr = (struct arp_header *) ptr;
 }
 
 u_int16_t ARPHeaderParser::get_uint_htype()
@@ -210,4 +221,12 @@ QString ARPHeaderParser::get_qstring_oper()
     default:
        return QString("Other");
    }
+}
+
+
+// UDP related
+UDPHeaderParser::UDPHeaderParser(const bpf_u_int32 len, const u_char *ptr)
+{
+    this->len = len;
+    uptr = (struct udp_header *) ptr;
 }

@@ -6,7 +6,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     pcapThread = NULL;
+    selected_device = QString("");
+    filter_rule = QString("");
     ui->setupUi(this);
+    ui->menuOperation->actions().at(0)->setEnabled(false); // start pcap
+    ui->menuOperation->actions().at(1)->setEnabled(false); // stop pcap
+    ui->menuOperation->actions().at(2)->setEnabled(true); // set device  TODO  why am I wrong
+    updateStatusMessage();
 }
 
 MainWindow::~MainWindow()
@@ -19,12 +25,12 @@ void MainWindow::startPcapThread()
     qDebug() << "startPcapThread()";
     if (pcapThread == NULL) {
         pcapThread = new PcapThread(this);
+        pcapThread->setArgs(selected_device, filter_rule);
         connect(pcapThread, &PcapThread::resultReady, this, &MainWindow::handleResults);
         connect(pcapThread, &PcapThread::finished, pcapThread, &QObject::deleteLater);
+        connect(pcapThread, &PcapThread::popMsg, this, &MainWindow::popMsg);
         pcapThread->start();
     }
-    ui->menuOperation->actions().at(0)->setEnabled(false);
-    ui->menuOperation->actions().at(1)->setEnabled(true);
 }
 
 void MainWindow::stopPcapThread()
@@ -33,8 +39,21 @@ void MainWindow::stopPcapThread()
         pcapThread->stopWork();
         pcapThread = NULL;
     }
-    ui->menuOperation->actions().at(1)->setEnabled(false);
-    ui->menuOperation->actions().at(0)->setEnabled(true);
+}
+
+void MainWindow::setArgs(QString dev, QString filter_rule){
+    selected_device=dev;
+    this->filter_rule = filter_rule;
+    qDebug() << "Reciving Device is set to" << dev;
+    ui->menuOperation->actions().at(0)->setEnabled(selected_device.isEmpty() ? false : true); // start pcap
+    ui->menuOperation->actions().at(1)->setEnabled(false); // stop pcap
+    ui->menuOperation->actions().at(2)->setEnabled(true); // set device
+    updateStatusMessage();
+}
+
+void MainWindow::popMsg(QString msg)
+{
+    QMessageBox::information(this, "Info", msg);
 }
 
 
@@ -54,11 +73,17 @@ void MainWindow::handleResults(const QByteArray &qba) {
 
 void MainWindow::on_actionStopPcap_triggered()
 {
+    ui->menuOperation->actions().at(0)->setEnabled(true); // start pcap
+    ui->menuOperation->actions().at(1)->setEnabled(false); // stop pcap
+    ui->menuOperation->actions().at(2)->setEnabled(true); // set device
     stopPcapThread();
 }
 
 void MainWindow::on_actionBeginPcap_triggered()
 {
+    ui->menuOperation->actions().at(0)->setEnabled(false); // start pcap
+    ui->menuOperation->actions().at(1)->setEnabled(true); // stop pcap
+    ui->menuOperation->actions().at(2)->setEnabled(false); // set device
     startPcapThread();
 }
 
@@ -89,6 +114,24 @@ QTreeWidgetItem* MainWindow::fast_add_child(QTreeWidgetItem *item, const QString
     return child;
 }
 
+void MainWindow::updateStatusMessage()
+{
+    QString msg("");
+
+    if (selected_device.isEmpty())
+        msg.append("你还没有选择网卡");
+    else
+        msg.append(QString("你选择的网卡为:%1").arg(selected_device));
+    msg.append(" || ");
+
+    if (filter_rule.isEmpty())
+        msg.append("未设置过滤规则");
+    else
+        msg.append(QString("当前的过滤规则为:%1").arg(filter_rule));
+
+    ui->statusBar->showMessage(msg);
+}
+
 void MainWindow::build_ether_tree(PackParser *ppsr)
 {
     QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget);
@@ -99,7 +142,7 @@ void MainWindow::build_ether_tree(PackParser *ppsr)
     fast_add_child(item, QString("Destination: %0").arg(EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_dhost())));
     fast_add_child(item, QString("Source: %0").arg(EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_shost())));
     fast_add_child(item, QString("Type: %0 (%1)").arg(
-           ppsr->ehp->get_string_type()).arg(QString().sprintf("0x%04X", ppsr->ehp->get_type())));
+           ppsr->ehp->get_qstring_type()).arg(QString().sprintf("0x%04X", ppsr->ehp->get_type())));
     // TODO CRC check
 }
 
@@ -127,7 +170,7 @@ void MainWindow::build_ip_tree(PackParser *ppsr)
     item->setText(0, QString("Internet Protocol Version 4, Src: %1 , Dst: %2")
       .arg(ihp->get_qstring_saddr()).arg(ihp->get_qstring_daddr()));
     fast_add_child(item, QString("Version: 4"));
-    fast_add_child(item, QString("Header Length: %1 bytes").arg(ihp->get_ip_byte_len()));
+    fast_add_child(item, QString("Header Length: %1 bytes").arg(ihp->get_header_byte_len()));
     fast_add_child(item, QString("Total Length: %1").arg(ihp->get_total_length()));
     fast_add_child(item, QString("Identification: 0x%1 (%2)").arg(QString().sprintf("%04X",ihp->get_id())).arg(ihp->get_id()));
     flag_item = fast_add_child(item, QString("Flags:"));
@@ -140,6 +183,12 @@ void MainWindow::build_ip_tree(PackParser *ppsr)
     fast_add_child(item, QString("Header checksum: 0x%1 ").arg(QString().sprintf("%04X", ihp->get_checksum())));
     fast_add_child(item, QString("Source: %1").arg(ihp->get_qstring_saddr()));
     fast_add_child(item, QString("Destination: %1").arg(ihp->get_qstring_daddr()));
-//            TODO: flags
-//
+}
+
+void MainWindow::on_actionSetDevice_triggered()
+{
+    sdd = new SetDeviceDialog(this);
+    sdd->setModal(true);
+    sdd->show();
+    connect(sdd, SIGNAL(setArgs(QString, QString)), this, SLOT(setArgs(QString, QString)));
 }

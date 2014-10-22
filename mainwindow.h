@@ -13,6 +13,8 @@
 #include "frame_parser.h"
 #include "pcapqtools.h"
 #include "hexdecode.h"
+#include "setdevicedialog.h"
+#include <QStringList>
 
 namespace Ui {
 class MainWindow;
@@ -32,6 +34,8 @@ public:
 
 public slots:
     void handleResults(const QByteArray &s);
+    void setArgs(QString dev, QString filter_rule);
+    void popMsg(QString);
 
 private slots:
 
@@ -41,6 +45,8 @@ private slots:
 
     void on_allWidgetTreeWidget_itemClicked(QTreeWidgetItem *item, int column);
 
+    void on_actionSetDevice_triggered();
+
 private:
     Ui::MainWindow *ui;
     PcapThread *pcapThread;
@@ -49,6 +55,10 @@ private:
     void build_arp_tree(PackParser *ppsr);
     void build_ip_tree(PackParser *ppsr);
     QTreeWidgetItem *fast_add_child(QTreeWidgetItem *item, const QString &qstr);
+    SetDeviceDialog * sdd;
+    QString selected_device;
+    QString filter_rule;
+    void updateStatusMessage();
 };
 
 #endif // MAINWINDOW_H

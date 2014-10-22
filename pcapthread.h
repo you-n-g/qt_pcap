@@ -19,14 +19,17 @@ class PcapThread : public QThread
 public:
     explicit PcapThread(QObject *parent = 0);
     void stopWork();
+    void setArgs(QString device, QString filter);
 signals:
     void resultReady(const QByteArray &data);
-public slots:
+    void popMsg(QString);
 
 private:
     void initDevice();
     pcap_t *handle;
     bool workOn;
+    QString filter_rule;
+    QString selected_device;
 };
 
 #endif // PCAPTHREAD_H
