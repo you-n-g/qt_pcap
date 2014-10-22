@@ -40,7 +40,7 @@ void PcapThread::initDevice() {
         mask = 0;
     }
 
-    // set the sniffer filter expression
+    // TODO: set the sniffer filter expression
     /*
     struct bpf_program fp;		// The compiled filter expression
     char filter_exp[] = "port 23";	// TODO change the filter expression,  see manual of pcap-filter and tcpdump
@@ -65,7 +65,6 @@ void PcapThread::run() Q_DECL_OVERRIDE {
             if (!workOn) break;
             packet = pcap_next(handle, &header);
             qDebug("Jacked a packet with length of [%d]\n", header.len);
-
             QByteArray qba((char *)packet, (int)header.len);
             emit resultReady(qba);
         }

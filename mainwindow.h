@@ -43,7 +43,12 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    PcapThread * pcapThread;
+    PcapThread *pcapThread;
+    void display_pack_trees(PackParser *ppsr);
+    void build_ether_tree(PackParser *ppsr);
+    void build_arp_tree(PackParser *ppsr);
+    void build_ip_tree(PackParser *ppsr);
+    QTreeWidgetItem *fast_add_child(QTreeWidgetItem *item, const QString &qstr);
 };
 
 #endif // MAINWINDOW_H

@@ -11,6 +11,18 @@ uint16_t EtherHeaderParser::get_type() {
     return ntohs(eptr->ether_type);
 }
 
+QString EtherHeaderParser::get_string_type()
+{
+
+    if (get_type() == ETHERTYPE_IP) {
+        return "IP";
+    }
+    else if (get_type() == ETHERTYPE_ARP) {
+        return "ARP";
+    }
+    return "UNKNOWN";
+}
+
 u_char* EtherHeaderParser::get_ether_shost() {
     return eptr->ether_shost;
 }
@@ -44,22 +56,19 @@ IpHeaderParser::IpHeaderParser(const bpf_u_int32 len, const u_char* frame_ptr){
     iptr = (struct ip *) frame_ptr;
 }
 
-unsigned int IpHeaderParser::get_version() {
-    return iptr->ip_v;
+QString IpHeaderParser::get_qstring_protocol()
+{
+    switch (get_uint_protocol()) {
+        case 1u:
+            return "ICMP";
+        case 6u:
+            return "TCP";
+        case 17u:
+            return "UDP";
+        default:
+            return "UNKNOWN";
+    }
 }
-
-u_short IpHeaderParser::get_ip_len() {
-    return ntohs(iptr->ip_hl);
-}
-
-u_int32_t IpHeaderParser::get_saddr() {
-    return ntohl(iptr->ip_src.s_addr);
-}
-
-u_int32_t IpHeaderParser::get_daddr() {
-    return ntohl(iptr->ip_dst.s_addr);
-}
-
 
 void IpHeaderParser::print_ip_address(u_int32_t u_int_ip) {
     for (int i = 3; i >= 0; --i)
@@ -90,13 +99,14 @@ PackParser::PackParser(const QByteArray &qba) {
     }
     else if (ehp->get_type() == ETHERTYPE_ARP) {
         highest_protocol = "ARP";
+        ahp = new ARPHeaderParser(ehp->get_next_layer_frame_length(), ehp->get_next_layer_frame_pointer());
         qDebug("Ethernet type hex:%x dec:%d is an ARP packet\n", ehp->get_type(), ehp->get_type());
     }
     else {
         highest_protocol = "UNKNOWN";
         qDebug("Ethernet type %x not IP, ARP", ehp->get_type());
     }
-};
+}
 
 const QString & PackParser::get_highest_protocol(){
     return highest_protocol;
@@ -139,3 +149,65 @@ QString *PackParser::to_ascii_qstring(bool with_space, bool with_linebreak)
 
 bool PackParser::isPrintable(char c)
 {if ((c > 48) && (c < 126)) return true; else return false; }
+
+
+// ARP related
+ARPHeaderParser::ARPHeaderParser(const bpf_u_int32 len, const u_char *packet)
+{
+    this->len = len;
+    aptr = (struct arp_header *) packet;
+}
+
+u_int16_t ARPHeaderParser::get_uint_htype()
+{
+    return ntohs(aptr->htype);
+}
+
+QString ARPHeaderParser::get_qstring_htype()
+{
+    switch (get_uint_htype()) {
+        case 1u:
+            return QString("Ethernet");
+        default:
+            return QString("Other");
+    }
+}
+
+uint16_t ARPHeaderParser::get_uint_ptype() {
+    return ntohs(aptr->ptype);
+}
+
+QString ARPHeaderParser::get_qstring_ptype()
+{
+
+    if (get_uint_ptype() == ETHERTYPE_IP) {
+        return "IP";
+    }
+    return "UNKNOWN";
+}
+
+QString ARPHeaderParser::get_qstring_oper()
+{
+   switch (get_uint_oper()) {
+    case 1u:
+       return QString("Request");
+    case 2u:
+       return QString("Reply");
+    case 3u:
+       return QString("Request Reverse");
+    case 4u:
+       return QString("Reply Reverse");
+    case 5u:
+       return QString("DRARP Request");
+    case 6u:
+       return QString("DRARP Reply");
+    case 7u:
+       return QString("DRARP Error");
+    case 8u:
+       return QString("InARP Request");
+    case 9u:
+       return QString("InARP Reply");
+    default:
+       return QString("Other");
+   }
+}

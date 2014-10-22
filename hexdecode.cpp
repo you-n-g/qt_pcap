@@ -13,7 +13,7 @@ HexDecode::~HexDecode()
     delete ui;
 }
 
-void HexDecode::display_pack(PackParser * ppsr)
+void HexDecode::display_pack_data(PackParser * ppsr)
 {
     ui->textOffset->clear();
     ui->textOutput->clear();

@@ -20,43 +20,42 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QSplitter" name="splitter">
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-      <widget class="QTreeWidget" name="allWidgetTreeWidget">
-       <column>
-        <property name="text">
-         <string>source</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>destination</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>protocol</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>length</string>
-        </property>
-       </column>
-      </widget>
-      <widget class="QTreeWidget" name="singlePackageTreeWidget">
-       <column>
-        <property name="text">
-         <string notr="true">1</string>
-        </property>
-       </column>
-      </widget>
-      <widget class="HexDecode" name="hexDecodeWidget" native="true"/>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTreeWidget" name="allWidgetTreeWidget">
+      <column>
+       <property name="text">
+        <string>source</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>destination</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>protocol</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>length</string>
+       </property>
+      </column>
      </widget>
+    </item>
+    <item>
+     <widget class="QTreeWidget" name="singlePackageTreeWidget">
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+    <item>
+     <widget class="HexDecode" name="hexDecodeWidget" native="true"/>
     </item>
    </layout>
   </widget>

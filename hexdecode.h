@@ -15,7 +15,7 @@ class HexDecode : public QWidget
 public:
     explicit HexDecode(QWidget *parent = 0);
     ~HexDecode();
-    void display_pack(PackParser *ppsr);
+    void display_pack_data(PackParser *ppsr);
 
 private:
     Ui::hexdecode *ui;
