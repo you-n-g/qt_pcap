@@ -59,11 +59,11 @@ IpHeaderParser::IpHeaderParser(const bpf_u_int32 len, const u_char* frame_ptr){
 QString IpHeaderParser::get_qstring_protocol()
 {
     switch (get_uint_protocol()) {
-        case 1u:
+        case IP_ICMP:
             return "ICMP";
-        case 6u:
+        case IP_TCP:
             return "TCP";
-        case 17u:
+        case IP_UDP:
             return "UDP";
         default:
             return "UNKNOWN";
@@ -104,9 +104,15 @@ PackParser::PackParser(const QByteArray &qba) {
     this->qba = qba;
     ehp = new EtherHeaderParser(qba.length(), (const u_char *)qba.constData());
     if (ehp->get_type() == ETHERTYPE_IP) {
-        highest_protocol = "IP";
         ihp = new IpHeaderParser(ehp->get_next_layer_frame_length(), ehp->get_next_layer_frame_pointer());
-        // if (ihp->get_uint_protocol() == ) // DOING.....
+        highest_protocol = ihp->get_qstring_protocol();
+        qDebug() << ihp->get_uint_protocol() << IP_UDP;
+        if (ihp->get_uint_protocol() == IP_UDP)
+            uhp = new UDPHeaderParser(ihp->get_next_layer_frame_length(), ihp->get_next_layer_frame_pointer());
+        else if (ihp->get_uint_protocol() == IP_TCP)
+            thp = new TCPHeaderParser(ihp->get_next_layer_frame_length(), ihp->get_next_layer_frame_pointer());
+        else if  (ihp->get_uint_protocol() == IP_ICMP)
+            ichp = new ICMPHeaderParser(ihp->get_next_layer_frame_length(), ihp->get_next_layer_frame_pointer());
     }
     else if (ehp->get_type() == ETHERTYPE_ARP) {
         highest_protocol = "ARP";
@@ -163,12 +169,19 @@ bool PackParser::isPrintable(char c)
 
 QString PackParser::get_description()
 {
-    if (ehp != NULL)
-        return ehp->get_description();
-    if (ahp != NULL)
-        return ahp->get_description();
+
+    if (thp != NULL)
+        return thp->get_description();
+    if (uhp != NULL)
+        return uhp->get_description();
+    if (ichp != NULL)
+        return ichp->get_description();
     if (ihp != NULL)
         return ihp->get_description();
+    if (ahp != NULL)
+        return ahp->get_description();
+    if (ehp != NULL)
+        return ehp->get_description();
     return QString("");
 }
 
@@ -235,9 +248,58 @@ QString ARPHeaderParser::get_qstring_oper()
 }
 
 
+// ICMP related
+ICMPHeaderParser::ICMPHeaderParser(const bpf_u_int32 len, const u_char *ptr)
+{
+    this->len = len;
+    iptr = (struct icmp_header *) ptr;
+}
+
+QString ICMPHeaderParser::get_qstring_type()
+{
+    switch (iptr->icmp_type) {
+        case 0:
+            return QString("ICMP Echo Reply Protocol");
+        case 8:
+            return QString("ICMP Echo Request Protocol");
+        case 3:
+            return QString("ICMP Unreachable");
+        case 4:
+            return QString("Source quench");
+        case 5:
+            return QString("ICMP Redirect");
+        case 9:
+            return QString("Router Advertisement");
+        case 10:
+            return QString("Router Solicitation");
+        case 11:
+            return QString("Time Exceeded");
+        case 13:
+            return QString("ICMP Timestamp Request");
+        case 14:
+            return QString("ICMP Timestamp Reply");
+        case 17:
+            return QString("Address Mask Request");
+        case 18:
+            return QString("Address Mask Reply");
+        default:
+            return QString("Unknown");
+        }
+}
+
+
 // UDP related
 UDPHeaderParser::UDPHeaderParser(const bpf_u_int32 len, const u_char *ptr)
 {
     this->len = len;
     uptr = (struct udp_header *) ptr;
 }
+
+
+// TCP related
+TCPHeaderParser::TCPHeaderParser(const bpf_u_int32 len, const u_char *ptr)
+{
+    this->len = len;
+    tptr = (struct tcp_header *) ptr;
+}
+

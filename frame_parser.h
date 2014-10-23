@@ -68,6 +68,9 @@ private:
     bpf_u_int32 len;
 };
 
+#define IP_ICMP 1u
+#define IP_TCP 6u
+#define IP_UDP 17u
 
 class IpHeaderParser {
 public:
@@ -103,6 +106,33 @@ private:
 };
 
 
+//icmp
+struct icmp_header
+{
+  u_int8_t icmp_type;
+  u_int8_t icmp_code;
+  u_int16_t icmp_chksum;
+  u_int16_t icmp_id;
+  u_int16_t icmp_seq;
+};
+
+class ICMPHeaderParser {
+public:
+    ICMPHeaderParser(const bpf_u_int32 len, const u_char* ptr);
+    u_int8_t get_code() {return iptr->icmp_code;}
+    u_int8_t get_uint_type() {return iptr->icmp_type;}
+    QString get_qstring_type();
+    u_int16_t get_checksum() {return ntohs(iptr->icmp_chksum);}
+    u_int16_t get_id() {return ntohs(iptr->icmp_id);}
+    u_int16_t get_seq() {return ntohs(iptr->icmp_seq);}
+    QString get_description() {return QString("Internet Control Message Protocol");}
+private:
+    icmp_header *iptr;
+    bpf_u_int32 len;
+};
+
+
+
 // UDP related
 struct udp_header
 {
@@ -114,10 +144,67 @@ struct udp_header
 
 class UDPHeaderParser {
 public:
-    UDPHeaderParser(const bpf_u_int32 len, const u_char* packet);
+    UDPHeaderParser(const bpf_u_int32 len, const u_char* ptr);
+    int get_src_port() {return ntohs(uptr->src_port);}
+    int get_dst_port() {return ntohs(uptr->dst_port);}
+    int get_len() {return ntohs(uptr->len);}
+    u_int16_t get_checksum() {return ntohs(uptr->checksum);}
+    QString get_description() {return QString("User Datagram Protocol, Src Port: %1 , Dst Port: %2"
+                                              ).arg(get_src_port()).arg(get_dst_port()); }
 
 private:
     udp_header *uptr;
+    bpf_u_int32 len;
+};
+
+// TCP
+struct tcp_header
+{
+  u_int16_t src_port;		/* source port */
+  u_int16_t dst_port;		/* destination port */
+  u_int32_t tcp_seq;		/* sequence number */
+  u_int32_t tcp_ack;		/* acknowledgement number */
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  u_int8_t tcp_reserved:4,	/* (unused) */
+    tcp_off:4;			/* data offset */
+#endif
+#if __BYTE_ORDER == __BIG_ENDIAN
+  u_int8_t tcp_off:4, tcp_reserved:4;
+#endif
+  u_int8_t th_flags;
+#define TH_FIN	0x01
+#define TH_SYN	0x02
+#define TH_RST	0x04
+#define TH_PSH	0x08
+#define TH_ACK	0x10
+#define TH_URG	0x20
+  u_int16_t th_win;		/* window */
+  u_int16_t th_sum;		/* checksum */
+  u_int16_t th_urp;		/* urgent pointer */
+};
+
+class TCPHeaderParser {
+public:
+    TCPHeaderParser(const bpf_u_int32 len, const u_char* ptr);
+    int get_src_port() {return ntohs(tptr->src_port);}
+    int get_dst_port() {return ntohs(tptr->dst_port);}
+    u_int32_t get_tcp_seq() {return ntohl(tptr->tcp_seq);}
+    u_int32_t get_tcp_ack() {return ntohl(tptr->tcp_ack);}
+    int get_header_len() {return tptr->tcp_off * 4;}
+    bool is_FIN_set() {return TH_FIN & tptr->th_flags;}
+    bool is_SYN_set() {return TH_SYN & tptr->th_flags;}
+    bool is_RST_set() {return TH_RST & tptr->th_flags;}
+    bool is_PSH_set() {return TH_PSH & tptr->th_flags;}
+    bool is_ACK_set() {return TH_ACK & tptr->th_flags;}
+    bool is_URG_set() {return TH_URG & tptr->th_flags;}
+    u_int16_t get_window_size() {return ntohs(tptr->th_win);}
+    u_int16_t get_checksum() {return ntohs(tptr->th_sum);}
+    u_int16_t get_urp() {return ntohs(tptr->th_urp);}
+    QString get_description() {return QString(
+    "Transmission Control Protocol, Src Port: %0, Dst Port: %1, Seq: %2, Ack: %3")
+    .arg(get_src_port()).arg(get_dst_port()).arg(get_tcp_seq()).arg(get_tcp_ack()); }
+private:
+    tcp_header *tptr;
     bpf_u_int32 len;
 };
 
@@ -131,6 +218,8 @@ public:
     IpHeaderParser *ihp=NULL;
     ARPHeaderParser *ahp=NULL;
     UDPHeaderParser *uhp=NULL;
+    TCPHeaderParser *thp=NULL;
+    ICMPHeaderParser *ichp=NULL;
     QByteArray qba;
     const QString & get_highest_protocol();
     QString * to_hex_qstring(bool with_space=true, bool with_linebreak=true);

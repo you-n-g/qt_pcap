@@ -45,7 +45,7 @@
       </column>
       <column>
        <property name="text">
-        <string>destination</string>
+        <string>description</string>
        </property>
       </column>
      </widget>

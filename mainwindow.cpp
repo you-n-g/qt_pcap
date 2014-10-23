@@ -88,17 +88,6 @@ void MainWindow::on_actionBeginPcap_triggered()
     startPcapThread();
 }
 
-/*
-void MainWindow::on_allPackTreeWidget_itemClicked(QTreeWidgetItem *item, int column)
-{
-    qDebug() << "we are in on_allPackTreeWidget_itemClicked";
-    PcapQTreeWidgetItem * pitem = (PcapQTreeWidgetItem *) item;
-    qDebug() << pitem->ppsr->get_highest_protocol();
-    ((HexDecode *) (ui->hexDecodeWidget))->display_pack_data(pitem->ppsr);
-    display_pack_trees(pitem->ppsr);
-}
-*/
-
 void MainWindow::display_pack_trees(PackParser *ppsr)
 {
     ui->singlePackageTreeWidget->clear();
@@ -108,6 +97,12 @@ void MainWindow::display_pack_trees(PackParser *ppsr)
         build_arp_tree(ppsr);
     if (ppsr->ihp != NULL)
         build_ip_tree(ppsr);
+    if (ppsr->ichp != NULL)
+        build_icmp_tree(ppsr);
+    if (ppsr->uhp != NULL)
+        build_udp_tree(ppsr);
+    if (ppsr->thp != NULL)
+        build_tcp_tree(ppsr);
 }
 
 QTreeWidgetItem* MainWindow::fast_add_child(QTreeWidgetItem *item, const QString &qstr)
@@ -197,6 +192,50 @@ void MainWindow::build_ip_tree(PackParser *ppsr)
     fast_add_child(item, QString("Destination: %1").arg(ihp->get_qstring_daddr()));
 }
 
+void MainWindow::build_udp_tree(PackParser *ppsr)
+{
+    UDPHeaderParser * uhp =  ppsr->uhp;
+    QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget);
+    item->setText(0, uhp->get_description());
+    fast_add_child(item, QString("Source Port: %0").arg(uhp->get_src_port()));
+    fast_add_child(item, QString("Destination Port: %0").arg(uhp->get_dst_port()));
+    fast_add_child(item, QString("Length: %0").arg(uhp->get_len()));
+    fast_add_child(item, QString("Checksum: 0x%0").arg(QString().sprintf("%02x", uhp->get_checksum())));
+}
+
+void MainWindow::build_tcp_tree(PackParser *ppsr)
+{
+    TCPHeaderParser * thp =  ppsr->thp;
+    QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget);
+    item->setText(0, thp->get_description());
+    fast_add_child(item, QString("Source Port: %0").arg(thp->get_src_port()));
+    fast_add_child(item, QString("Destination Port: %0").arg(thp->get_dst_port()));
+    fast_add_child(item, QString("Sequence number: %0").arg(thp->get_tcp_seq()));
+    fast_add_child(item, QString("Acknowlegment number: %0").arg(thp->get_tcp_ack()));
+    fast_add_child(item, QString("Header Length: %0 bytes").arg(thp->get_header_len()));
+    fast_add_child(item, QString("FIN:%0 SYN:%1 RST:%2 PSH:%3 ACK:%4 URG:%5")
+       .arg(thp->is_FIN_set()).arg(thp->is_SYN_set()).arg(thp->is_RST_set())
+       .arg(thp->is_PSH_set()).arg(thp->is_ACK_set()).arg(thp->is_URG_set()));
+    fast_add_child(item, QString("Window size value: %0").arg(thp->get_window_size()));
+    fast_add_child(item, QString("Checksum: 0x%0").arg(QString().sprintf("%04x", thp->get_window_size())));
+    fast_add_child(item, QString("Urgent pointer: %0").arg(thp->get_urp()));
+}
+
+void MainWindow::build_icmp_tree(PackParser *ppsr)
+{
+    ICMPHeaderParser * ichp =  ppsr->ichp;
+    QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget);
+    item->setText(0, ichp->get_description());
+    fast_add_child(item,QString("Type: %0 (%1)").arg(ichp->get_uint_type()).arg(ichp->get_qstring_type()));
+    fast_add_child(item,QString("Code: %0").arg(ichp->get_code()));
+    fast_add_child(item,QString("Checksum: 0x%0")
+                   .arg(QString().sprintf("%04x", ichp->get_checksum())));
+    fast_add_child(item,QString("Identifier: %0 (0x%1)")
+                   .arg(ichp->get_id()).arg(QString().sprintf("%04x", ichp->get_id())));
+    fast_add_child(item,QString("Sequence number: %0 (0x%1)")
+                   .arg(ichp->get_seq()).arg(QString().sprintf("%04x", ichp->get_seq())));
+}
+
 void MainWindow::on_actionSetDevice_triggered()
 {
     sdd = new SetDeviceDialog(this);
@@ -215,9 +254,7 @@ void MainWindow::on_actionDisplayChart_triggered()
 
 void MainWindow::on_allPackTreeWidget_itemClicked(QTreeWidgetItem *item, int column)
 {
-    qDebug() << "we are in on_allPackTreeWidget_itemClicked";
     PcapQTreeWidgetItem * pitem = (PcapQTreeWidgetItem *) item;
-    qDebug() << pitem->ppsr->get_highest_protocol();
     ((HexDecode *) (ui->hexDecodeWidget))->display_pack_data(pitem->ppsr);
     display_pack_trees(pitem->ppsr);
 }

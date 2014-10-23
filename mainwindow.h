@@ -57,6 +57,9 @@ private:
     void build_ether_tree(PackParser *ppsr);
     void build_arp_tree(PackParser *ppsr);
     void build_ip_tree(PackParser *ppsr);
+    void build_udp_tree(PackParser *ppsr);
+    void build_tcp_tree(PackParser *ppsr);
+    void build_icmp_tree(PackParser *ppsr);
     QTreeWidgetItem *fast_add_child(QTreeWidgetItem *item, const QString &qstr);
     SetDeviceDialog *sdd;
     PcapChart *pchart;
