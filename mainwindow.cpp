@@ -61,13 +61,14 @@ void MainWindow::handleResults(const QByteArray &qba) {
     qDebug() << "qba length" << qba.length();
     if (qba.length() > 0) {
         PackParser * ppsr = new PackParser(qba);
-        PcapQTreeWidgetItem *item = new PcapQTreeWidgetItem(ui->allWidgetTreeWidget, ppsr);
-        item->setText(0, EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_shost()));
-        item->setText(1, EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_dhost()));
+        PcapQTreeWidgetItem *item = new PcapQTreeWidgetItem(ui->allPackTreeWidget, ppsr);
+        item->setText(0, ppsr->get_source());
+        item->setText(1, ppsr->get_destination());
         item->setText(2, ppsr->get_highest_protocol());
         item->setText(3, QString::number(ppsr->qba.length()));
-        ui->allWidgetTreeWidget->addTopLevelItem(item);
-        ui->allWidgetTreeWidget->scrollToBottom();
+        item->setText(4, ppsr->get_description());
+        ui->allPackTreeWidget->addTopLevelItem(item);
+        ui->allPackTreeWidget->scrollToBottom();
     }
 }
 
@@ -87,13 +88,16 @@ void MainWindow::on_actionBeginPcap_triggered()
     startPcapThread();
 }
 
-void MainWindow::on_allWidgetTreeWidget_itemClicked(QTreeWidgetItem *item, int column)
+/*
+void MainWindow::on_allPackTreeWidget_itemClicked(QTreeWidgetItem *item, int column)
 {
+    qDebug() << "we are in on_allPackTreeWidget_itemClicked";
     PcapQTreeWidgetItem * pitem = (PcapQTreeWidgetItem *) item;
     qDebug() << pitem->ppsr->get_highest_protocol();
     ((HexDecode *) (ui->hexDecodeWidget))->display_pack_data(pitem->ppsr);
     display_pack_trees(pitem->ppsr);
 }
+*/
 
 void MainWindow::display_pack_trees(PackParser *ppsr)
 {
@@ -132,13 +136,22 @@ void MainWindow::updateStatusMessage()
     ui->statusBar->showMessage(msg);
 }
 
+QMap<QString, int> MainWindow::do_statistics()
+{
+    QMap<QString, int> map;
+    QString protocol;
+    for (int i = 0; i < ui->allPackTreeWidget->topLevelItemCount(); ++i) {
+        protocol = ((PcapQTreeWidgetItem *) (ui->allPackTreeWidget->topLevelItem(i)))->ppsr->get_highest_protocol();
+        map.insert(protocol, map.value(protocol, 0) + 1);
+    }
+    qDebug() << map;
+    return map;
+}
+
 void MainWindow::build_ether_tree(PackParser *ppsr)
 {
     QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget);
-    item->setText(0, QString("Ethernet II, Src: %0 , Dst: %1").arg(
-                                         EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_shost())).arg(
-                                         EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_dhost())));
-
+    item->setText(0, ppsr->ehp->get_description());
     fast_add_child(item, QString("Destination: %0").arg(EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_dhost())));
     fast_add_child(item, QString("Source: %0").arg(EtherHeaderParser::byte_to_mac_addr(ppsr->ehp->get_ether_shost())));
     fast_add_child(item, QString("Type: %0 (%1)").arg(
@@ -150,7 +163,7 @@ void MainWindow::build_arp_tree(PackParser *ppsr)
 {
     ARPHeaderParser * ahp =  ppsr->ahp;
     QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget);
-    item->setText(0, QString("Address Resolution Protocol (%0)").arg(ahp->get_qstring_oper()));
+    item->setText(0, ahp->get_description());
     fast_add_child(item, QString("Hardware type: %1 (%2)").arg(ahp->get_qstring_htype()).arg(ahp->get_uint_htype()));
     fast_add_child(item, QString("Protocol type: %1 (0x%2)").arg(
        ahp->get_qstring_ptype()).arg(QString().sprintf("%04X", ahp->get_uint_ptype())));
@@ -167,8 +180,7 @@ void MainWindow::build_ip_tree(PackParser *ppsr)
 {
     IpHeaderParser * ihp =  ppsr->ihp;
     QTreeWidgetItem *item = new QTreeWidgetItem(ui->singlePackageTreeWidget), *flag_item;
-    item->setText(0, QString("Internet Protocol Version 4, Src: %1 , Dst: %2")
-      .arg(ihp->get_qstring_saddr()).arg(ihp->get_qstring_daddr()));
+    item->setText(0, ihp->get_description());
     fast_add_child(item, QString("Version: 4"));
     fast_add_child(item, QString("Header Length: %1 bytes").arg(ihp->get_header_byte_len()));
     fast_add_child(item, QString("Total Length: %1").arg(ihp->get_total_length()));
@@ -191,4 +203,21 @@ void MainWindow::on_actionSetDevice_triggered()
     sdd->setModal(true);
     sdd->show();
     connect(sdd, SIGNAL(setArgs(QString, QString)), this, SLOT(setArgs(QString, QString)));
+}
+
+void MainWindow::on_actionDisplayChart_triggered()
+{
+    pchart = new PcapChart(this);
+    pchart->setModal(true);
+    pchart->show();
+    pchart->setModel(do_statistics());
+}
+
+void MainWindow::on_allPackTreeWidget_itemClicked(QTreeWidgetItem *item, int column)
+{
+    qDebug() << "we are in on_allPackTreeWidget_itemClicked";
+    PcapQTreeWidgetItem * pitem = (PcapQTreeWidgetItem *) item;
+    qDebug() << pitem->ppsr->get_highest_protocol();
+    ((HexDecode *) (ui->hexDecodeWidget))->display_pack_data(pitem->ppsr);
+    display_pack_trees(pitem->ppsr);
 }

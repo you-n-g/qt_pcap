@@ -18,17 +18,22 @@ SOURCES += main.cpp\
     pcapthread.cpp \
     pcapqtools.cpp \
     hexdecode.cpp \
-    setdevicedialog.cpp
+    setdevicedialog.cpp \
+    pieview.cpp \
+    pcapchart.cpp
 
 HEADERS  += mainwindow.h \
     frame_parser.h \
     pcapthread.h \
     pcapqtools.h \
     hexdecode.h \
-    setdevicedialog.h
+    setdevicedialog.h \
+    pieview.h \
+    pcapchart.h
 
 FORMS    += mainwindow.ui \
     hexdecode.ui \
-    setdevicedialog.ui
+    setdevicedialog.ui \
+    pcapchart.ui
 
 unix|win32: LIBS += -lpcap

@@ -22,7 +22,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QTreeWidget" name="allWidgetTreeWidget">
+     <widget class="QTreeWidget" name="allPackTreeWidget">
       <column>
        <property name="text">
         <string>source</string>
@@ -41,6 +41,11 @@
       <column>
        <property name="text">
         <string>length</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>destination</string>
        </property>
       </column>
      </widget>
@@ -75,6 +80,7 @@
     <addaction name="actionBeginPcap"/>
     <addaction name="actionStopPcap"/>
     <addaction name="actionSetDevice"/>
+    <addaction name="actionDisplayChart"/>
    </widget>
    <addaction name="menuOperation"/>
   </widget>
@@ -88,6 +94,7 @@
    <addaction name="actionSetDevice"/>
    <addaction name="actionBeginPcap"/>
    <addaction name="actionStopPcap"/>
+   <addaction name="actionDisplayChart"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionBeginPcap">
@@ -103,6 +110,11 @@
   <action name="actionSetDevice">
    <property name="text">
     <string>设置网卡</string>
+   </property>
+  </action>
+  <action name="actionDisplayChart">
+   <property name="text">
+    <string>查看包统计</string>
    </property>
   </action>
  </widget>

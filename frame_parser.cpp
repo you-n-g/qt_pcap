@@ -161,6 +161,17 @@ QString *PackParser::to_ascii_qstring(bool with_space, bool with_linebreak)
 bool PackParser::isPrintable(char c)
 {if ((c > 48) && (c < 126)) return true; else return false; }
 
+QString PackParser::get_description()
+{
+    if (ehp != NULL)
+        return ehp->get_description();
+    if (ahp != NULL)
+        return ahp->get_description();
+    if (ihp != NULL)
+        return ihp->get_description();
+    return QString("");
+}
+
 
 // ARP related
 ARPHeaderParser::ARPHeaderParser(const bpf_u_int32 len, const u_char *ptr)

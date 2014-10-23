@@ -24,6 +24,9 @@ public:
     u_char* get_next_layer_frame_pointer();
     bpf_u_int32 get_next_layer_frame_length();
     static QString byte_to_mac_addr(u_char*);
+    QString get_description(){return QString("Ethernet II, Src: %0 , Dst: %1").arg(
+                                         EtherHeaderParser::byte_to_mac_addr(get_ether_shost())).arg(
+                                         EtherHeaderParser::byte_to_mac_addr(get_ether_dhost()));}
 private:
     struct ether_header * eptr;
     bpf_u_int32 len;
@@ -59,6 +62,7 @@ public:
     QString get_spa(){return inet_ntoa(aptr->spa);}
     QString get_tha(){return EtherHeaderParser::byte_to_mac_addr(aptr->tha);}
     QString get_tpa(){return inet_ntoa(aptr->tpa);}
+    QString get_description() {return QString("Address Resolution Protocol (%0)").arg(get_qstring_oper());}
 private:
     struct arp_header * aptr;
     bpf_u_int32 len;
@@ -91,6 +95,8 @@ public:
     bpf_u_int32 get_next_layer_frame_length();
     void print_hex_content();
     static void print_ip_address(u_int32_t);
+    QString get_description(){return QString("Internet Protocol Version 4, Src: %1 , Dst: %2")
+      .arg(get_qstring_saddr()).arg(get_qstring_daddr());}
 private:
     struct ip * iptr;
     bpf_u_int32 len;
@@ -130,7 +136,9 @@ public:
     QString * to_hex_qstring(bool with_space=true, bool with_linebreak=true);
     QString * to_ascii_qstring(bool with_space=true, bool with_linebreak=true);
     static bool isPrintable(char c);
-
+    QString get_description();
+    QString get_source() {return ihp == NULL? EtherHeaderParser::byte_to_mac_addr(ehp->get_ether_shost()):ihp->get_qstring_saddr();}
+    QString get_destination() { return ihp == NULL? EtherHeaderParser::byte_to_mac_addr(ehp->get_ether_dhost()):ihp->get_qstring_daddr();}
 private:
     QString highest_protocol;
 };
