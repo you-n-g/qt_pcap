@@ -37,3 +37,6 @@ FORMS    += mainwindow.ui \
     pcapchart.ui
 
 unix|win32: LIBS += -lpcap
+
+RESOURCES += \
+    resource.qrc
